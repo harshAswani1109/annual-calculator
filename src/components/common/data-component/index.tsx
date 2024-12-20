@@ -24,8 +24,8 @@ interface AggregatedTotals {
 }
 
 const DataComponent: React.FC = () => {
-  const [purchaseData, setPurchaseData] = useState<DataItem[]>([]);
-  const [saleData, setSaleData] = useState<DataItem[]>([]);
+  const [purchaseData, setPurchaseData] = useState<AggregatedTotals["daily"]>({});
+  const [saleData, setSaleData] = useState<AggregatedTotals["daily"]>({});
   const [purchaseTotals, setPurchaseTotals] = useState<AggregatedTotals>({
     daily: {},
     monthly: {},
@@ -43,8 +43,11 @@ const DataComponent: React.FC = () => {
         const purchaseResponse = await axios.get<ApiResponse>("/api/get-purchase");
         const saleResponse = await axios.get<ApiResponse>("/api/get-sale");
 
-        setPurchaseData(purchaseResponse.data.results);
-        setSaleData(saleResponse.data.results);
+        const purchases = calculateDailyTotals(purchaseResponse.data.results);
+        const sales = calculateDailyTotals(saleResponse.data.results);
+
+        setPurchaseData(purchases);
+        setSaleData(sales);
 
         setPurchaseTotals(calculateAggregatedTotals(purchaseResponse.data.results));
         setSaleTotals(calculateAggregatedTotals(saleResponse.data.results));
@@ -55,6 +58,15 @@ const DataComponent: React.FC = () => {
 
     fetchData();
   }, []);
+
+  const calculateDailyTotals = (data: DataItem[]) => {
+    const dailyTotals: Record<string, number> = {};
+    data.forEach((item) => {
+      const date = item.timeStamp.split("T")[0]; // Extract YYYY-MM-DD
+      dailyTotals[date] = (dailyTotals[date] || 0) + item.number;
+    });
+    return dailyTotals;
+  };
 
   const calculateAggregatedTotals = (data: DataItem[]): AggregatedTotals => {
     const totals: AggregatedTotals = { daily: {}, monthly: {}, yearly: {} };
@@ -78,14 +90,14 @@ const DataComponent: React.FC = () => {
   };
 
   const renderTotals = (totals: AggregatedTotals, title: string) => (
-    <div className="bg-gray-50 rounded-lg shadow-md p-4">
+    <div className="bg-gray-50 rounded-lg shadow-md p-4 mt-4">
       <h3 className="text-lg font-bold mb-2">{title}</h3>
       <div className="grid grid-cols-3 gap-4">
         <div>
           <h4 className="font-semibold text-blue-500">Yearly Totals</h4>
           <ul>
             {Object.entries(totals.yearly).map(([year, total]) => (
-              <li key={year} className="text-sm">{`${year}: ${total}`}</li>
+              <li key={year} className="text-sm">{`${year}: ${total.toLocaleString()}`}</li>
             ))}
           </ul>
         </div>
@@ -93,18 +105,18 @@ const DataComponent: React.FC = () => {
           <h4 className="font-semibold text-green-500">Monthly Totals</h4>
           <ul>
             {Object.entries(totals.monthly).map(([month, total]) => (
-              <li key={month} className="text-sm">{`${month}: ${total}`}</li>
+              <li key={month} className="text-sm">{`${month}: ${total.toLocaleString()}`}</li>
             ))}
           </ul>
         </div>
-        <div>
+        {/* <div>
           <h4 className="font-semibold text-purple-500">Daily Totals</h4>
           <ul>
             {Object.entries(totals.daily).map(([date, total]) => (
               <li key={date} className="text-sm">{`${date}: ${total}`}</li>
             ))}
           </ul>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -120,14 +132,14 @@ const DataComponent: React.FC = () => {
           <thead className="bg-blue-100">
             <tr>
               <th className="border px-4 py-2">Date</th>
-              <th className="border px-4 py-2">Number</th>
+              <th className="border px-4 py-2">Total Number</th>
             </tr>
           </thead>
           <tbody>
-            {purchaseData.map((item) => (
-              <tr key={item._id}>
-                <td className="border px-4 py-2">{item.timeStamp}</td>
-                <td className="border px-4 py-2">{item.number}</td>
+            {Object.entries(purchaseData).map(([date, total]) => (
+              <tr key={date}>
+                <td className="border px-4 py-2">{date}</td>
+                <td className="border px-4 py-2">{total.toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
@@ -144,14 +156,14 @@ const DataComponent: React.FC = () => {
           <thead className="bg-green-100">
             <tr>
               <th className="border px-4 py-2">Date</th>
-              <th className="border px-4 py-2">Number</th>
+              <th className="border px-4 py-2">Total Number</th>
             </tr>
           </thead>
           <tbody>
-            {saleData.map((item) => (
-              <tr key={item._id}>
-                <td className="border px-4 py-2">{item.timeStamp}</td>
-                <td className="border px-4 py-2">{item.number}</td>
+            {Object.entries(saleData).map(([date, total]) => (
+              <tr key={date}>
+                <td className="border px-4 py-2">{date}</td>
+                <td className="border px-4 py-2">{total.toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
