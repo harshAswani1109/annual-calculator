@@ -18,10 +18,10 @@ const Navbar: React.FC = () => {
           Buy
         </Link>
         <Link
-          href="/sell"
-          className={`${pathname === "/sell" ? "underline" : ""}`}
+          href="/sale"
+          className={`${pathname === "/sale" ? "underline" : ""}`}
         >
-          Sell
+          Sale
         </Link>
       </div>
 
@@ -36,10 +36,10 @@ const Navbar: React.FC = () => {
             Buy
           </Link>
           <Link
-            href="/sell"
-            className={`${pathname === "/sell" ? "underline" : ""}`}
+            href="/sale"
+            className={`${pathname === "/sale" ? "underline" : ""}`}
           >
-            Sell
+            Sale
           </Link>
         </div>
       </div>
