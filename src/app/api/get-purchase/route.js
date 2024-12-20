@@ -6,7 +6,7 @@ export async function GET(req) {
       // Connect to MongoDB
       const client = await clientPromise;
       const db = client.db(process.env.NEXT_PUBLIC_DB_NAME);
-      const collection = db.collection("AnnualDB");
+      const collection = db.collection("AnnualDB-Buy");
   
       // Retrieve data from the collection
       const results = await collection.find({}).toArray(); // Fetch all documents
