@@ -16,18 +16,25 @@ interface ApiResponse {
   results: DataItem[];
 }
 
-// Define the type for monthly totals
-interface MonthlyTotals {
-  purchases: Record<string, number>;
-  sales: Record<string, number>;
+// Define the type for aggregated totals
+interface AggregatedTotals {
+  daily: Record<string, number>;
+  monthly: Record<string, number>;
+  yearly: Record<string, number>;
 }
 
 const DataComponent: React.FC = () => {
   const [purchaseData, setPurchaseData] = useState<DataItem[]>([]);
   const [saleData, setSaleData] = useState<DataItem[]>([]);
-  const [monthlyTotals, setMonthlyTotals] = useState<MonthlyTotals>({
-    purchases: {},
-    sales: {},
+  const [purchaseTotals, setPurchaseTotals] = useState<AggregatedTotals>({
+    daily: {},
+    monthly: {},
+    yearly: {},
+  });
+  const [saleTotals, setSaleTotals] = useState<AggregatedTotals>({
+    daily: {},
+    monthly: {},
+    yearly: {},
   });
 
   useEffect(() => {
@@ -39,10 +46,8 @@ const DataComponent: React.FC = () => {
         setPurchaseData(purchaseResponse.data.results);
         setSaleData(saleResponse.data.results);
 
-        calculateMonthlyTotals(
-          purchaseResponse.data.results,
-          saleResponse.data.results
-        );
+        setPurchaseTotals(calculateAggregatedTotals(purchaseResponse.data.results));
+        setSaleTotals(calculateAggregatedTotals(saleResponse.data.results));
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -51,21 +56,58 @@ const DataComponent: React.FC = () => {
     fetchData();
   }, []);
 
-  const calculateMonthlyTotals = (purchases: DataItem[], sales: DataItem[]) => {
-    const totals: MonthlyTotals = { purchases: {}, sales: {} };
+  const calculateAggregatedTotals = (data: DataItem[]): AggregatedTotals => {
+    const totals: AggregatedTotals = { daily: {}, monthly: {}, yearly: {} };
 
-    const addToTotals = (data: DataItem[], key: keyof MonthlyTotals) => {
-      data.forEach((item) => {
-        const month = item.timeStamp.slice(0, 7); // Extract YYYY-MM format
-        totals[key][month] = (totals[key][month] || 0) + item.number;
-      });
-    };
+    data.forEach((item) => {
+      const date = item.timeStamp.split("T")[0]; // Extract YYYY-MM-DD
+      const month = date.slice(0, 7); // Extract YYYY-MM
+      const year = date.slice(0, 4); // Extract YYYY
 
-    addToTotals(purchases, "purchases");
-    addToTotals(sales, "sales");
+      // Calculate daily totals
+      totals.daily[date] = (totals.daily[date] || 0) + item.number;
 
-    setMonthlyTotals(totals);
+      // Calculate monthly totals
+      totals.monthly[month] = (totals.monthly[month] || 0) + item.number;
+
+      // Calculate yearly totals
+      totals.yearly[year] = (totals.yearly[year] || 0) + item.number;
+    });
+
+    return totals;
   };
+
+  const renderTotals = (totals: AggregatedTotals, title: string) => (
+    <div className="bg-gray-50 rounded-lg shadow-md p-4">
+      <h3 className="text-lg font-bold mb-2">{title}</h3>
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <h4 className="font-semibold text-blue-500">Yearly Totals</h4>
+          <ul>
+            {Object.entries(totals.yearly).map(([year, total]) => (
+              <li key={year} className="text-sm">{`${year}: ${total}`}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-semibold text-green-500">Monthly Totals</h4>
+          <ul>
+            {Object.entries(totals.monthly).map(([month, total]) => (
+              <li key={month} className="text-sm">{`${month}: ${total}`}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-semibold text-purple-500">Daily Totals</h4>
+          <ul>
+            {Object.entries(totals.daily).map(([date, total]) => (
+              <li key={date} className="text-sm">{`${date}: ${total}`}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-6 bg-gray-100 min-h-screen mt-12">
@@ -90,6 +132,7 @@ const DataComponent: React.FC = () => {
             ))}
           </tbody>
         </table>
+        {renderTotals(purchaseTotals, "Purchase Totals")}
       </div>
 
       {/* Sales Table */}
@@ -113,6 +156,7 @@ const DataComponent: React.FC = () => {
             ))}
           </tbody>
         </table>
+        {renderTotals(saleTotals, "Sales Totals")}
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ const Navbar: React.FC = () => {
   const pathname = usePathname(); // Get the current path
 
   return (
-    <nav className={`fixed top-0 left-0 w-full flex justify-between items-center p-4 text-white z-10 bg-white/30 backdrop-blur-md rounded-b-lg shadow-lg ${pathname === "/buy" ? "" : ""}`}>
+    <nav className={`fixed top-0 left-0 w-full flex justify-between items-center p-4 text-white z-10 bg-white/30 backdrop-blur-md rounded-b-lg shadow-lg ${pathname === "/anils" ? "bg-black" : ""}`}>
       {/* Mobile View */}
       <div className="flex md:hidden justify-around text-2xl items-center w-full"
       >
